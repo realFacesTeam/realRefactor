@@ -19,19 +19,19 @@ server.configure(function(){
 //setup the errors
 server.error(function(err, req, res, next){
     if (err instanceof NotFound) {
-        res.render('404.jade', { locals: { 
+        res.render('404.jade', { locals: {
                   title : '404 - Not Found'
                  ,description: ''
                  ,author: ''
-                 ,analyticssiteid: 'XXXXXXX' 
+                 ,analyticssiteid: 'XXXXXXX'
                 },status: 404 });
     } else {
-        res.render('500.jade', { locals: { 
+        res.render('500.jade', { locals: {
                   title : 'The Server Encountered an Error'
                  ,description: ''
                  ,author: ''
                  ,analyticssiteid: 'XXXXXXX'
-                 ,error: err 
+                 ,error: err
                 },status: 500 });
     }
 });
@@ -40,13 +40,26 @@ server.listen( port);
 //Setup Socket.IO
 var io = io.listen(server);
 io.sockets.on('connection', function(socket){
-  console.log('Client Connected');
-  socket.on('message', function(data){
-    socket.broadcast.emit('server_message',data);
-    socket.emit('server_message',data);
+
+  console.log('Client Connected', socket.id);
+
+  socket.broadcast.emit('new_client', socket.id);
+
+  // socket.on('message', function(data){
+  //   socket.broadcast.emit('server_message',data);
+  //   socket.emit('server_message',data);
+  // });
+
+  socket.on('translate', function(translation){
+    socket.broadcast.emit('translate_other_player', {clientID:socket.id, translation:translation});
+    console.log('player translation heard in server', socket.id, translation)
+
   });
+
   socket.on('disconnect', function(){
-    console.log('Client Disconnected.');
+    console.log('Client Disconnected.', socket.id);
+
+    socket.broadcast.emit('client_disconnected', socket.id)
   });
 });
 
@@ -59,11 +72,11 @@ io.sockets.on('connection', function(socket){
 
 server.get('/', function(req,res){
   res.render('index.jade', {
-    locals : { 
+    locals : {
               title : 'Your Page Title'
              ,description: 'Your Page Description'
              ,author: 'Your Name'
-             ,analyticssiteid: 'XXXXXXX' 
+             ,analyticssiteid: 'XXXXXXX'
             }
   });
 });
