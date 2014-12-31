@@ -1,5 +1,5 @@
 var createPlayerCube = function(ID, createTranslation){
-  console.log(ID, createTranslation)
+  console.log(ID, createTranslation);
 
   var geometry = new THREE.BoxGeometry( 10, 10, 10 );
   //var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
@@ -20,10 +20,60 @@ var createPlayerCube = function(ID, createTranslation){
   console.log('creating playerCube-', playerCube.name)
   playerCube.position.y += 10;
 
+
+  playerCube.velocity = {};
+  playerCube.rotationalVelocity = {};
+
+  playerCube.velocity.x = 0;
+  playerCube.velocity.y = 0;
+  playerCube.velocity.z = 0;
+
+  playerCube.rotationalVelocity.x = 0;
+  playerCube.rotationalVelocity.y = 0;
+
+
+  playerCube.lastTween = performance.now();
+  playerCube.lastServerUpdate = performance.now();
+  playerCube.moving = false;
+
+  playerCube.tweenedMove = function(){
+    if(playerCube.moving){
+
+        var updateTime = socketInterval;
+        var interval = (performance.now() - playerCube.lastTween);
+
+
+
+        if (performance.now() < playerCube.lastServerUpdate + updateTime){
+          console.log('moving cube')
+
+          playerCube.position.x += (playerCube.velocity.x * interval);
+          playerCube.position.y += (playerCube.velocity.y * interval);
+          playerCube.position.z += (playerCube.velocity.z * interval);
+
+          //playerCube.pastRotation.x = playerCube.rotation.x;
+          //playerCube.pastRotation.y = playerCube.rotation.y;
+        }else{
+          console.log('stopped moving')
+          playerCube.velocity.x = 0;
+          playerCube.velocity.y = 0;
+          playerCube.velocity.z = 0;
+          playerCube.moving = false;
+        }
+        playerCube.lastTween = performance.now();
+
+    }
+  };
+
+
+  playerCube.update = function(){
+    playerCube.tweenedMove();
+  };
+
+
+  objects.push( playerCube );
   scene.add( playerCube );
 
-  // if(createTranslation)
-  //   translatePlayer(ID, createTranslation);
 
 };
 
@@ -33,30 +83,48 @@ var removePlayer = function(ID){
   var player = scene.getObjectByName('player-'+ID);
   scene.remove(player);
 
-}
+};
 
 var translatePlayer = function(ID, translation){
   console.log('trans', ID, translation);
 
   var player = scene.getObjectByName('player-'+ID);
 
-  // player.translateX(translation.position.x - player.position.x);
-  // player.translateY(translation.position.y - player.position.y);
-  // player.translateZ(translation.position.z - player.position.z);
 
   player.position.x = translation.position.x;
-  player.position.y = translation.position.y
-  player.position.z = translation.position.z
+  player.position.y = translation.position.y;
+  player.position.z = translation.position.z;
 
-  player.rotation.x = -translation.rotation.x;
+  // TODO: Euler Angles must be applied to other players before x rotation can be synced
+  // player.rotation.x = translation.rotation.x;
+
   player.rotation.y = translation.rotation.y;
 
-}
+};
 
-playerEvents.addListener('new_player', createPlayerCube)
+var translatePlayerTweened = function(ID, translation){
 
-playerEvents.addListener('remove_player', removePlayer)
+  var player = scene.getObjectByName('player-'+ID);
 
-playerEvents.addListener('translate_other_player', translatePlayer)
+  if (!player.moving){
+    player.moving = true;
+    player.velocity.x = (translation.position.x - player.position.x)/(socketInterval);
+    player.velocity.y = (translation.position.y - player.position.y)/(socketInterval);
+    player.velocity.z = (translation.position.z - player.position.z)/(socketInterval);
+    console.log('vel',player.velocity);
+    //player.toRotate.y = translation.rotation.y;
+
+    player.lastTween = performance.now();
+    player.lastServerUpdate = performance.now();
+  }
+};
+
+playerEvents.addListener('new_player', createPlayerCube);
+
+playerEvents.addListener('remove_player', removePlayer);
+
+playerEvents.addListener('translate_other_player', translatePlayer);
+
+playerEvents.addListener('translate_other_player_tweened', translatePlayerTweened);
 
 

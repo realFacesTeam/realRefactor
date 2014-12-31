@@ -195,6 +195,15 @@ function animate() {
 
   }
 
+  for(var i = 0, len = objects.length; i < len; i++){
+
+    var object = objects[i];
+
+    if (object.hasOwnProperty('update'))
+      object.update();
+
+  }
+
   controls.update();
 
   renderer.render( scene, camera );

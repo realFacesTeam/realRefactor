@@ -41,6 +41,8 @@ THREE.PointerLockControls = function ( camera ) {
       y: yawObject.rotation.y
     }
 
+    //console.log('yaw/pitch objs',yawObject, pitchObject)
+
     return {position:position, rotation:rotation};
   };
 

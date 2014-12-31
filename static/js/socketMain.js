@@ -1,6 +1,6 @@
 /* Author: YOUR NAME HERE
 */
-
+var socketInterval = 50;
 
 $(document).ready(function() {
 
@@ -28,7 +28,7 @@ $(document).ready(function() {
       translated = false;
     }
     //socket.emit('heartbeat')
-  }, 100)
+  }, socketInterval)
 
 
   //OTHER PLAYER UPDATES FROM SERVER
