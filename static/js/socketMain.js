@@ -33,20 +33,28 @@ $(document).ready(function() {
 
   //OTHER PLAYER UPDATES FROM SERVER
 
-  socket.on('new_client', function(clientID){
+  socket.on('preexisting_clients', function(clientTranslations, yourID){
+    console.log('creating existing clients', clientTranslations, yourID)
+    for (var id in clientTranslations){
+      if (clientTranslations.hasOwnProperty(id) && clientTranslations[id] && id !== yourID){
+        console.log('creating earlier client', id)
+        playerEvents.emit('new_player', id, clientTranslations[id]);
+        playerEvents.emit('translate_other_player', id, clientTranslations[id]);
+      }
 
+    }
+  })
+
+  socket.on('new_client', function(clientID){
     //otherPlayerUpdates will hear this and create a new player
     playerEvents.emit('new_player', [clientID])
   });
 
   socket.on('client_disconnected', function(clientID){
-
     playerEvents.emit('remove_player', [clientID])
-
   })
 
   socket.on('translate_other_player', function(data){
-
     //otherPlayerUpdates will hear this and move the respective player
     playerEvents.emit('translate_other_player', data.clientID, data.translation)
   });

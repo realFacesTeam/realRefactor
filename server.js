@@ -38,10 +38,19 @@ server.error(function(err, req, res, next){
 server.listen( port);
 
 //Setup Socket.IO
+var clientTranslations = {}
+
 var io = io.listen(server);
 io.sockets.on('connection', function(socket){
 
   console.log('Client Connected', socket.id);
+
+  clientTranslations[socket.id] = {
+    position: {x:0, y:10, z:0},
+    rotation: {x:0, y:0}
+  }
+
+  socket.emit('preexisting_clients', clientTranslations, socket.id);
 
   socket.broadcast.emit('new_client', socket.id);
 
@@ -52,12 +61,13 @@ io.sockets.on('connection', function(socket){
 
   socket.on('translate', function(translation){
     socket.broadcast.emit('translate_other_player', {clientID:socket.id, translation:translation});
-    console.log('player translation heard in server', socket.id, translation)
-
+    clientTranslations[socket.id] = translation;
   });
 
   socket.on('disconnect', function(){
     console.log('Client Disconnected.', socket.id);
+
+    delete clientTranslations[socket.id];
 
     socket.broadcast.emit('client_disconnected', socket.id)
   });

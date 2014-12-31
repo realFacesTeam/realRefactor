@@ -44,6 +44,7 @@ THREE.PointerLockControls = function ( camera ) {
     return {position:position, rotation:rotation};
   };
 
+  var rotated = false;
   var onMouseMove = function ( event ) {
 
     if ( scope.enabled === false ) return;
@@ -51,16 +52,14 @@ THREE.PointerLockControls = function ( camera ) {
     var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
     var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-    if (Math.abs(movementX) > 0.1 || Math.abs(movementY) > 0.1){
+    if (Math.abs(movementX) > 0.04 || Math.abs(movementY) > 0.04){
+
+      rotated = true;
 
       yawObject.rotation.y -= movementX * 0.002;
       pitchObject.rotation.x -= movementY * 0.002;
 
       pitchObject.rotation.x = Math.max( - PI_2, Math.min( PI_2, pitchObject.rotation.x ) );
-
-      // emit the new player rotation
-      var translation = getTranslation()
-      playerEvents.emit('player_movement', [translation]);
 
     }
 
@@ -181,11 +180,12 @@ THREE.PointerLockControls = function ( camera ) {
     var delta = ( time - prevTime ) / 1000;
 
 
-    if (velocity.x !== 0 || velocity.y !== 0 || velocity.z !== 0){
+    if (velocity.x !== 0 || velocity.y !== 0 || velocity.z !== 0 || rotated){
 
       var translation = getTranslation();
       playerEvents.emitEvent('player_movement', [translation]);
       //socket.emit('movement', velocity);
+      rotated = false;
     }
 
     velocity.x -= velocity.x * 10.0 * delta;
