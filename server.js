@@ -60,7 +60,7 @@ io.sockets.on('connection', function(socket){
   // });
 
   socket.on('translate', function(translation){
-    socket.broadcast.emit('translate_other_player', {clientID:socket.id, translation:translation});
+    socket.broadcast.emit('move_other_player', {clientID:socket.id, translation:translation});
     clientTranslations[socket.id] = translation;
   });
 

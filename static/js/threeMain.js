@@ -204,6 +204,10 @@ function animate() {
 
   }
 
+
+
+  TWEEN.update();
+
   controls.update();
 
   renderer.render( scene, camera );

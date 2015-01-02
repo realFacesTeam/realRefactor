@@ -1,5 +1,4 @@
 var createPlayerCube = function(ID, createTranslation){
-  console.log(ID, createTranslation);
 
   var geometry = new THREE.BoxGeometry( 10, 10, 10 );
   //var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
@@ -17,57 +16,11 @@ var createPlayerCube = function(ID, createTranslation){
   var playerCube = new THREE.Mesh( geometry, material );
 
   playerCube.name = 'player-' + ID;
-  console.log('creating playerCube-', playerCube.name)
   playerCube.position.y += 10;
 
 
-  playerCube.velocity = {};
-  playerCube.rotationalVelocity = {};
-
-  playerCube.velocity.x = 0;
-  playerCube.velocity.y = 0;
-  playerCube.velocity.z = 0;
-
-  playerCube.rotationalVelocity.x = 0;
-  playerCube.rotationalVelocity.y = 0;
-
-
-  playerCube.lastTween = performance.now();
-  playerCube.lastServerUpdate = performance.now();
-  playerCube.moving = false;
-
-  playerCube.tweenedMove = function(){
-    if(playerCube.moving){
-
-        var updateTime = socketInterval;
-        var interval = (performance.now() - playerCube.lastTween);
-
-
-
-        if (performance.now() < playerCube.lastServerUpdate + updateTime){
-          console.log('moving cube')
-
-          playerCube.position.x += (playerCube.velocity.x * interval);
-          playerCube.position.y += (playerCube.velocity.y * interval);
-          playerCube.position.z += (playerCube.velocity.z * interval);
-
-          //playerCube.pastRotation.x = playerCube.rotation.x;
-          //playerCube.pastRotation.y = playerCube.rotation.y;
-        }else{
-          console.log('stopped moving')
-          playerCube.velocity.x = 0;
-          playerCube.velocity.y = 0;
-          playerCube.velocity.z = 0;
-          playerCube.moving = false;
-        }
-        playerCube.lastTween = performance.now();
-
-    }
-  };
-
-
   playerCube.update = function(){
-    playerCube.tweenedMove();
+   // playerCube.tweenedMove();
   };
 
 
@@ -85,8 +38,7 @@ var removePlayer = function(ID){
 
 };
 
-var translatePlayer = function(ID, translation){
-  console.log('trans', ID, translation);
+var teleportPlayer = function(ID, translation){
 
   var player = scene.getObjectByName('player-'+ID);
 
@@ -102,29 +54,44 @@ var translatePlayer = function(ID, translation){
 
 };
 
-var translatePlayerTweened = function(ID, translation){
+var movePlayer = function(ID, newTranslation){
 
   var player = scene.getObjectByName('player-'+ID);
 
-  if (!player.moving){
-    player.moving = true;
-    player.velocity.x = (translation.position.x - player.position.x)/(socketInterval);
-    player.velocity.y = (translation.position.y - player.position.y)/(socketInterval);
-    player.velocity.z = (translation.position.z - player.position.z)/(socketInterval);
-    console.log('vel',player.velocity);
-    //player.toRotate.y = translation.rotation.y;
-
-    player.lastTween = performance.now();
-    player.lastServerUpdate = performance.now();
+  if(!player.tweenedPosition){
+    player.tweenedPosition = {
+      x : player.position.x,
+      y : player.position.y,
+      z : player.position.z
+    };
+    player.tweenedRotation = {
+      y : player.rotation.y
+    }
   }
+
+  player.positionTween = new TWEEN.Tween(player.tweenedPosition).to(newTranslation.position, socketInterval);
+  player.rotationTween = new TWEEN.Tween(player.tweenedRotation).to(newTranslation.rotation, socketInterval);
+
+  player.positionTween.onUpdate(function(){
+    player.position.x = player.tweenedPosition.x;
+    player.position.y = player.tweenedPosition.y;
+    player.position.z = player.tweenedPosition.z;
+  });
+
+  player.rotationTween.onUpdate(function(){
+    player.rotation.y = player.tweenedRotation.y;
+  });
+
+  player.positionTween.start();
+  player.rotationTween.start();
 };
 
 playerEvents.addListener('new_player', createPlayerCube);
 
 playerEvents.addListener('remove_player', removePlayer);
 
-playerEvents.addListener('translate_other_player', translatePlayer);
+playerEvents.addListener('teleport_other_player', teleportPlayer);
 
-playerEvents.addListener('translate_other_player_tweened', translatePlayerTweened);
+playerEvents.addListener('move_other_player', movePlayer);
 
 

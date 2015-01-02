@@ -1,6 +1,6 @@
-/* Author: YOUR NAME HERE
-*/
-var socketInterval = 50;
+
+
+var socketInterval = 200;
 
 $(document).ready(function() {
 
@@ -11,12 +11,12 @@ $(document).ready(function() {
   var playerTranslation = {
     position: {x:0, y:10, z:0},
     rotation: {x:0, y:0}
-  }
+  };
 
   var translated = false;
 
   var storePlayerTranslation = function(translation){
-    playerTranslation = translation
+    playerTranslation = translation;
     translated = true;
   }
 
@@ -28,35 +28,33 @@ $(document).ready(function() {
       translated = false;
     }
     //socket.emit('heartbeat')
-  }, socketInterval)
+  }, socketInterval);
 
 
   //OTHER PLAYER UPDATES FROM SERVER
 
   socket.on('preexisting_clients', function(clientTranslations, yourID){
-    console.log('creating existing clients', clientTranslations, yourID)
     for (var id in clientTranslations){
       if (clientTranslations.hasOwnProperty(id) && clientTranslations[id] && id !== yourID){
-        console.log('creating earlier client', id)
         playerEvents.emit('new_player', id, clientTranslations[id]);
-        playerEvents.emit('translate_other_player', id, clientTranslations[id]);
+        playerEvents.emit('teleport_other_player', id, clientTranslations[id]);
       }
 
     }
-  })
+  });
 
   socket.on('new_client', function(clientID){
     //otherPlayerUpdates will hear this and create a new player
-    playerEvents.emit('new_player', [clientID])
+    playerEvents.emit('new_player', [clientID]);
   });
 
   socket.on('client_disconnected', function(clientID){
-    playerEvents.emit('remove_player', [clientID])
-  })
+    playerEvents.emit('remove_player', [clientID]);
+  });
 
-  socket.on('translate_other_player', function(data){
+  socket.on('move_other_player', function(data){
     //otherPlayerUpdates will hear this and move the respective player
-    playerEvents.emit('translate_other_player', data.clientID, data.translation)
+    playerEvents.emit('move_other_player', data.clientID, data.translation);
   });
 
 });
